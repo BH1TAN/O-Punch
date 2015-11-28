@@ -43,7 +43,7 @@ uint8_t numOfSector = 16;                 // Assume Mifare Classic 1K for now (1
 char data;
 
 // Create an instance of the NFCShield_I2C class
-Adafruit_NFCShield_I2C nfc(IRQ, RESET);
+Adafruit_NFCShield_I2C nfc(IRQ);
 
 void setup(void) {
   Serial.begin(115200);
