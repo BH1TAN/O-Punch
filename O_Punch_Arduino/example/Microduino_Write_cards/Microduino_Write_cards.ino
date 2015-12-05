@@ -101,6 +101,7 @@ void format()
     Serial.println("");
 
     // Make sure this is a Mifare Classic card
+    
     if (uidLength != 4)
     {
       Serial.println("Ooops ... this doesn't seem to be a Mifare Classic card!");

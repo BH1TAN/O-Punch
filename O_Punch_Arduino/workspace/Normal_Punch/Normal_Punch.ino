@@ -40,57 +40,24 @@ uint8_t numOfSector = 16;                 // Assume Mifare Classic 1K for now (1
 uint8_t keya[6]={ 0xff,0xff,0xff,0xff,0xff,0xff };
 
 uint32_t versiondata;
-char Data;
 
-const char * url = "microduino.cc";  //The message to write
+char * data ;
+char * url = "microduino.cc";  //The message to write
 uint8_t ndefprefix = NDEF_URIPREFIX_HTTP_WWWDOT;
 
 // Create an instance of the NFCShield_I2C class
 Adafruit_NFCShield_I2C nfc(IRQ);      //修改了推荐文件,编译通过了 
 
-void setup(void) {
-  
-  
-  // put your setup code here, to run once:
-  Serial.begin(115200);    //open serial with PC
-  Serial1.begin(115200);   //open serial1 with device
-  Serial.println("Looking for PN532...\n");
-  
-  nfc.begin();
-  
-  versiondata = nfc.getFirmwareVersion();
-  /*
-  if (! versiondata) {
-    Serial.print("Didn't find PN53x board");
-    while (1); // halt
-  }
-*/
-  
-  nfc.SAMConfig();    // configure board to read RFID tags
-}
 
-void loop(void) {
-  // put your main code here, to run repeatedly:
-  Serial.println("WORKING NOW...");
-  
-  while (!Serial.available())
-  ;
-  if (Serial.read())
-  {
-    Serial.print("Found chip PN5"); 
-    Serial.println((versiondata >> 24) & 0xFF, HEX);
-    Serial.print("Firmware ver. "); 
-    Serial.print((versiondata >> 16) & 0xFF, DEC);
-    Serial.print('.'); 
-    Serial.println((versiondata >> 8) & 0xFF, DEC);
-    Serial.println(versiondata & 0xff , HEX);
-  }
+void writenfc(void){
   
   // Wait for an ISO14443A type card (Mifare, etc.).  When one is found
   // 'uid' will be populated with the UID, and uidLength will indicate
   // if the uid is 4 bytes (Mifare Classic) or 7 bytes (Mifare Ultralight)
   success_r = nfc.readPassiveTargetID(PN532_MIFARE_ISO14443A, uid, &uidLength);
-  if(success_r)
+  if(!success_r)
+    return;
+  else
   {
     //对标签写入数据
     Serial.print("  UID Length: "); 
@@ -100,7 +67,6 @@ void loop(void) {
     nfc.PrintHex(uid, uidLength);
     Serial.println("");
   }
-  
   //复制开始
   success_r = nfc.mifareclassic_AuthenticateBlock (uid, uidLength, 0, 0, keya);
     if (!success_r)
@@ -137,9 +103,6 @@ void loop(void) {
     // see http://www.ladyada.net/wiki/private/articlestaging/nfc/ndef
     if (strlen(url) > 38)
     {
-      // The length is also checked in the WriteNDEFURI function, but lets
-      // warn users here just in case they change the value and it's bigger
-      // than it should be
       Serial.println("URI is too long ... must be less than 38 characters long");
       return;
     }
@@ -148,7 +111,7 @@ void loop(void) {
     success_r = nfc.mifareclassic_WriteNDEFURI(15, ndefprefix, url);      //sector to write
     if (success_r)
     {
-      Serial.println("NDEF URI Record seems to have written to sector 1");
+      Serial.println("NDEF URI Record seems to have been written to sector 1");
     }
     else
     {
@@ -156,4 +119,46 @@ void loop(void) {
     }
 
   //复制结束
+ 
+
+}
+void setup(void) {
+  
+  
+  // put your setup code here, to run once:
+  Serial.begin(115200);    //open serial with PC
+  Serial1.begin(115200);   //open serial1 with device
+  Serial.println("Looking for PN532...\n");
+  
+  nfc.begin();
+  
+  versiondata = nfc.getFirmwareVersion();
+  /*
+  if (! versiondata) {
+    Serial.print("Didn't find PN53x board");
+    while (1); // halt
+  }
+  */
+  
+  nfc.SAMConfig();    // configure board to read RFID tags
+}
+
+void loop(void) {
+  // put your main code here, to run repeatedly:
+  //Serial.println("WORKING NOW...");
+  
+
+  if (Serial.available())
+  {
+    Serial.print("Chip PN5"); 
+    Serial.println((versiondata >> 24) & 0xFF, HEX);
+    Serial.print("Firmware ver. "); 
+    Serial.print((versiondata >> 16) & 0xFF, DEC);
+    Serial.print('.'); 
+    Serial.println((versiondata >> 8) & 0xFF, DEC);
+    Serial.println(versiondata & 0xff , HEX);
+  }
+  
+  writenfc();
+  
 }
