@@ -41,34 +41,57 @@ uint8_t keya[6]={ 0xff,0xff,0xff,0xff,0xff,0xff };
 
 uint32_t versiondata;
 
-char * data ;
+uint8_t data[16];
+//char * data ;
+//uint8_t url[32] = "microduino.cc";
 char * url = "microduino.cc";  //The message to write
 uint8_t ndefprefix = NDEF_URIPREFIX_HTTP_WWWDOT;
 
 // Create an instance of the NFCShield_I2C class
 Adafruit_NFCShield_I2C nfc(IRQ);      //修改了推荐文件,编译通过了 
 
+/****************************************************************************/
+//函数起始
+
+void readnfc(void){
+  /*
+  success_r=nfc.readPassiveTargetID(PN532_MIFARE_ISO14443A, uid, &uidLength);
+  if(!success_r)
+    return;
+  else
+  {
+    //提示标签类型
+    Serial.print("UID Length(READING): "); 
+    Serial.print(uidLength, DEC); 
+    Serial.println(" bytes(READING)");
+    Serial.print("UID Value(READING): ");
+    nfc.PrintHex(uid, uidLength);
+  }
+  success_r = nfc.mifareclassic_ReadDataBlock (1,data);
+  if(!success_r)
+    return;
+  else
+    Serial.println(data);
+    */
+}
 
 void writenfc(void){
-  
-  // Wait for an ISO14443A type card (Mifare, etc.).  When one is found
-  // 'uid' will be populated with the UID, and uidLength will indicate
-  // if the uid is 4 bytes (Mifare Classic) or 7 bytes (Mifare Ultralight)
   success_r = nfc.readPassiveTargetID(PN532_MIFARE_ISO14443A, uid, &uidLength);
   if(!success_r)
     return;
   else
   {
-    //对标签写入数据
-    Serial.print("  UID Length: "); 
+    //提示标签类型
+    Serial.print("UID Length: "); 
     Serial.print(uidLength, DEC); 
-    Serial.println(" bytes");
-    Serial.print("  UID Value: ");
+    Serial.println("bytes");
+    Serial.print("UID Value: ");
     nfc.PrintHex(uid, uidLength);
-    Serial.println("");
   }
   //复制开始
-  success_r = nfc.mifareclassic_AuthenticateBlock (uid, uidLength, 0, 0, keya);
+  
+  /*
+  success_r = nfc.mifareclassic_AuthenticateBlock (uid, uidLength, 0, 0, keya);//勿修改
     if (!success_r)
     {
       Serial.println("Unable to authenticate block 0 to enable card formatting!");
@@ -82,10 +105,10 @@ void writenfc(void){
     }
 
     Serial.println("Card has been formatted for NDEF data using MAD1");
+*/
 
-    // Try to authenticate block 4 (first block of sector 1) using our key
+    // Try to authenticate block 4 (first block of sector 1) using keya
     success_r = nfc.mifareclassic_AuthenticateBlock (uid, uidLength, 4, 0, keya);
-
     // Make sure the authentification process didn't fail
     if (!success_r)
     {
@@ -108,18 +131,13 @@ void writenfc(void){
     }
 
     // URI is within size limits ... write it to the card and report success/failure
-    success_r = nfc.mifareclassic_WriteNDEFURI(15, ndefprefix, url);      //sector to write
+    success_r = nfc.mifareclassic_WriteNDEFURI(1, ndefprefix, url);      //sector to write
     if (success_r)
-    {
-      Serial.println("NDEF URI Record seems to have been written to sector 1");
-    }
+      Serial.println("NDEF URI Record seems to have been written to sector 1\n");
     else
-    {
-      Serial.println("NDEF Record creation failed! ");
-    }
-
+      Serial.println("NDEF Record creation failed! \n");
   //复制结束
- 
+   
 
 }
 void setup(void) {
@@ -158,7 +176,8 @@ void loop(void) {
     Serial.println((versiondata >> 8) & 0xFF, DEC);
     Serial.println(versiondata & 0xff , HEX);
   }
-  
+  readnfc();
   writenfc();
+  delay(1000);
   
 }
