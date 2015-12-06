@@ -17,7 +17,7 @@
 #define NR_LONGSECTOR           (8)     // Number of long sectors on Mifare 4K
 #define NR_BLOCK_OF_SHORTSECTOR (4)     // Number of blocks in a short sector
 #define NR_BLOCK_OF_LONGSECTOR  (16)    // Number of blocks in a long sector
-//
+
 // Determine the sector trailer block based on sector number
 #define BLOCK_NUMBER_OF_SECTOR_TRAILER(sector) (((sector)<NR_SHORTSECTOR)? \
     ((sector)*NR_BLOCK_OF_SHORTSECTOR + NR_BLOCK_OF_SHORTSECTOR-1):\
@@ -40,52 +40,57 @@ uint8_t numOfSector = 16;                 // Assume Mifare Classic 1K for now (1
 uint8_t keya[6]={ 0xff,0xff,0xff,0xff,0xff,0xff };
 
 uint32_t versiondata;
+unsigned short TempNum1,TempNum2;
 
-uint8_t data[32];
-uint8_t data2[32];
+
+
+/*************标签信息**********************/
+uint8_t data1[4];    //一个block有个uint8_t数据
+uint8_t data2[4];
+uint8_t StateFlag;
+uint8_t PreCursor;
+/*************标签信息**********************/
 
 // Create an instance of the NFCShield_I2C class
 Adafruit_NFCShield_I2C nfc(IRQ);      //修改了推荐文件,编译通过了 
 
-/****************************************************************************/
-//函数起始
+/*********************************函数起始************************************/
 
 void readnfc(void){
-  /*
   success_r=nfc.readPassiveTargetID(PN532_MIFARE_ISO14443A, uid, &uidLength);
   if(!success_r)
+  {
+    Serial.println("Fail to read");
     return;
+  }
   else
   {
     //提示标签类型
     Serial.print("UID Length(READING): "); 
     Serial.print(uidLength, DEC); 
-    Serial.println(" bytes(READING)");
+    Serial.println(" bytes");
     Serial.print("UID Value(READING): ");
     nfc.PrintHex(uid, uidLength);
   }
-  success_r = nfc.mifareclassic_ReadDataBlock (1,data);
+  
+  success_r = nfc.mifareclassic_ReadDataBlock (4,data2);
   if(!success_r)
     return;
   else
-    Serial.println(data);
-    */
+  {
+    for(TempNum1=0;TempNum1<4;TempNum1++)
+      {
+        Serial.print("*");
+        Serial.print(data2[TempNum1]);
+      }
+    Serial.println("");
+  }
 }
 
 void writenfc(void){
   success_r = nfc.readPassiveTargetID(PN532_MIFARE_ISO14443A, uid, &uidLength);
   if(!success_r)
     return;
-  else
-  {
-    //提示标签类型
-    Serial.print("UID Length: "); 
-    Serial.print(uidLength, DEC); 
-    Serial.println("bytes");
-    Serial.print("UID Value: ");
-    nfc.PrintHex(uid, uidLength);
-  }
-  //复制开始
   
   /*
   success_r = nfc.mifareclassic_AuthenticateBlock (uid, uidLength, 0, 0, keya);//勿修改
@@ -112,16 +117,11 @@ void writenfc(void){
       Serial.println("Authentication failed.");
       return;
     }
-
-    // Try to write a URL
-    Serial.println("Writing URI to sector 1 as an NDEF Message");
-
-    success_r = nfc.mifareclassic_WriteDataBlock(4,data);      //sector to write
+    success_r = nfc.mifareclassic_WriteDataBlock(4,data1);      //block to write
     if (success_r)
       Serial.println("NDEF URI Record seems to have been written to block 4\n");
     else
       Serial.println("NDEF Record creation failed! \n");
-  //复制结束
    
 
 }
