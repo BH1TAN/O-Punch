@@ -41,11 +41,8 @@ uint8_t keya[6]={ 0xff,0xff,0xff,0xff,0xff,0xff };
 
 uint32_t versiondata;
 
-uint8_t data[16];
-//char * data ;
-//uint8_t url[32] = "microduino.cc";
-char * url = "microduino.cc";  //The message to write
-uint8_t ndefprefix = NDEF_URIPREFIX_HTTP_WWWDOT;
+uint8_t data[32];
+uint8_t data2[32];
 
 // Create an instance of the NFCShield_I2C class
 Adafruit_NFCShield_I2C nfc(IRQ);      //修改了推荐文件,编译通过了 
@@ -119,21 +116,9 @@ void writenfc(void){
     // Try to write a URL
     Serial.println("Writing URI to sector 1 as an NDEF Message");
 
-    // Authenticated seems to have worked
-    // Try to write an NDEF record to sector 1
-    // Use 0x01 for the URI Identifier Code to prepend "http://www."
-    // to the url (and save some space).  For information on URI ID Codes
-    // see http://www.ladyada.net/wiki/private/articlestaging/nfc/ndef
-    if (strlen(url) > 38)
-    {
-      Serial.println("URI is too long ... must be less than 38 characters long");
-      return;
-    }
-
-    // URI is within size limits ... write it to the card and report success/failure
-    success_r = nfc.mifareclassic_WriteNDEFURI(1, ndefprefix, url);      //sector to write
+    success_r = nfc.mifareclassic_WriteDataBlock(4,data);      //sector to write
     if (success_r)
-      Serial.println("NDEF URI Record seems to have been written to sector 1\n");
+      Serial.println("NDEF URI Record seems to have been written to block 4\n");
     else
       Serial.println("NDEF Record creation failed! \n");
   //复制结束
