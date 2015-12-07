@@ -8,7 +8,7 @@
 ********************************************************/
 
 
-#include<Wire.h>
+#include <Wire.h>
 #include <Adafruit_NFCShield_I2C.h>
 
 #define IRQ                     (2)
@@ -45,23 +45,23 @@ unsigned short TempNum1,TempNum2;
 
 
 /*************标签信息**********************/
-uint8_t data1[4];    //写入的数据,一个block有个uint8_t数据
+uint8_t data1[4];    //写入的数据,一个block有4个最大255的uint8_t数据
 uint8_t data2[4];    //读出的数据
-uint8_t StateFlag;   //标签激活与否
 uint8_t PreCursor;   //上一次写入的block号
 uint8_t OrderNum;    //0为起点,1为终点
-
+uint8_t StatesNum;   //点签状态
 /*************标签信息**********************/
 
-/*************点签时间信息**********************/
+/*************点签信息**********************/
 unsigned long RaceTime;
 unsigned long TimeBios = 0;
 uint8_t time[4];
-/*************点签时间信息**********************/
+unsigned short StatesNum;   //点签工作模式
+/*************点签信息**********************/
 
 
 // Create an instance of the NFCShield_I2C class
-Adafruit_NFCShield_I2C nfc(IRQ);      //修改了推荐文件,编译通过了 
+Adafruit_NFCShield_I2C nfc(IRQ);
 
 /*********************************函数起始************************************/
 
@@ -71,11 +71,12 @@ void GetTime(void)
   time[0]=RaceTime/3600000;      //时
   time[1]=(RaceTime/60000)%60;   //分
   time[2]=(RaceTime/1000)%60;    //秒
-  time[3]=(RaceTime%1000)/10;    //秒的小数
+  time[3]=(RaceTime%1000)/100;    //秒的小数
 }
 
 void SerialPrintTime(void)
 {
+  GetTime();
   Serial.print(RaceTime);
   Serial.print("*");
   Serial.print(time[0]);
@@ -105,10 +106,9 @@ void readnfc(void){
     nfc.PrintHex(uid, uidLength);
   }
   
-  success_r = nfc.mifareclassic_ReadDataBlock (3,data2);
+  success_r = nfc.mifareclassic_ReadDataBlock (2,data2);
   if(!success_r)
     return;
-
   else
   {
     for(TempNum1=0;TempNum1<4;TempNum1++)
@@ -151,7 +151,7 @@ void writenfc(void){
       return;
     }
     
-    success_r = nfc.mifareclassic_WriteDataBlock(3,data1);      //block to write
+    success_r = nfc.mifareclassic_WriteDataBlock(2,data1);      //block to write
     if (success_r)
       Serial.println("NDEF URI Record seems to have been written to block 4\n");
     else
