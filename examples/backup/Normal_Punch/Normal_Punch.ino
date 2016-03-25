@@ -48,15 +48,15 @@ unsigned short TempNum1,TempNum2;
 uint8_t data1[4];    //写入的数据,一个block有4个最大255的uint8_t数据
 uint8_t data2[4];    //读出的数据
 uint8_t PreCursor;   //上一次写入的block号
+uint8_t PreOrder;    //上一个点签号
 uint8_t OrderNum;    //0为起点,1为终点
-uint8_t StatesNum;   //点签状态
 /*************标签信息**********************/
 
 /*************点签信息**********************/
 unsigned long RaceTime;
 unsigned long TimeBios = 0;
 uint8_t time[4];
-unsigned short StatesNum;   //点签工作模式
+unsigned short StatesNum;   //点签工作模式,0为收到未激活标签等,1为普通写入
 /*************点签信息**********************/
 
 
@@ -68,10 +68,10 @@ Adafruit_NFCShield_I2C nfc(IRQ);
 void GetTime(void)
 {
   RaceTime=millis();
-  time[0]=RaceTime/3600000;      //时
-  time[1]=(RaceTime/60000)%60;   //分
-  time[2]=(RaceTime/1000)%60;    //秒
-  time[3]=(RaceTime%1000)/100;    //秒的小数
+  time[1]=RaceTime/3600000;      //时
+  time[2]=(RaceTime/60000)%60;   //分
+  time[3]=(RaceTime/1000)%60;    //秒
+  //time[0]=(RaceTime%1000)/100;    //秒的小数
 }
 
 void SerialPrintTime(void)
@@ -106,17 +106,31 @@ void readnfc(void){
     nfc.PrintHex(uid, uidLength);
   }
   
-  success_r = nfc.mifareclassic_ReadDataBlock (2,data2);
+  success_r = nfc.mifareclassic_ReadDataBlock (4,data2);
   if(!success_r)
-    return;
+  {
+    Serial.println('Cant read data block4');
+  }
   else
   {
-    for(TempNum1=0;TempNum1<4;TempNum1++)
-      {
-        Serial.print("*");
-        Serial.print(data2[TempNum1]);
-      }
-    Serial.println("");
+    if(data2[0]==3)        //标签未激活
+    {
+      Serial.println('Tag NOT in use');
+      StatesNum=0;
+      return;
+    }
+    else if (data2[0]>3)
+    {
+      PreOrder=data2[1];         //收集上一个点签号
+      Serial.println('Tag in use');
+      StatesNum=1;
+    }
+    else if(data2[0]<3)
+    {
+      Serial.println('Tag is strange');
+    }
+    else
+      return;
   }
 }
 
@@ -124,39 +138,43 @@ void writenfc(void){
   success_r = nfc.readPassiveTargetID(PN532_MIFARE_ISO14443A, uid, &uidLength);
   if(!success_r)
     return;
-  
-  /*
-  success_r = nfc.mifareclassic_AuthenticateBlock (uid, uidLength, 0, 0, keya);//勿修改
-    if (!success_r)
-    {
-      Serial.println("Unable to authenticate block 0 to enable card formatting!");
-      return;
-    }
-    success_r = nfc.mifareclassic_FormatNDEF();
-    if (!success_r)
-    {
-      Serial.println("Unable to format the card for NDEF");
-      return;
-    }
 
-    Serial.println("Card has been formatted for NDEF data using MAD1");
-*/
-
-    // Try to authenticate block 4 (first block of sector 1) using keya
-    success_r = nfc.mifareclassic_AuthenticateBlock (uid, uidLength, 4, 0, keya);
-    // Make sure the authentification process didn't fail
-    if (!success_r)
+    if(StatesNum)
     {
-      Serial.println("Authentication failed.");
-      return;
+      //准备即将写入的信息
+      GetTime();
+      for(TempNum1=0;TempNum1<4;TempNum1++)
+        data1[TempNum1]=time[TempNum1];
+      data1[0]=OrderNum;
+      //准备即将写入的信息
+      if(PreOrder==OrderNum)    //上一条记录由本点签写入
+      {
+        success_r = nfc.mifareclassic_WriteDataBlock(PreCursor,data1);      //block to write
+        if (success_r)
+        Serial.println("Write to OLD block\n");
+      else
+        Serial.println("error:Fail to write to the old block\n");
+      }
+      else
+      {
+        PreCursor++;
+        success_r = nfc.mifareclassic_WriteDataBlock(PreCursor,data1);      //block to write
+        if (success_r)
+          Serial.println("Write to NEW block\n");
+        else
+          Serial.println("error:Fail to write to a new block\n");        
+      }
+      data1[0]=PreCursor;
+      data1[1]=OrderNum;
+      data1[2]=0;
+      data1[3]=0;
+      success_r = nfc.mifareclassic_WriteDataBlock(4,data1);      //block4 to write
+      if (success_r)
+        Serial.println("Block4 updated \n");
+      else
+        Serial.println("error:Fail to update Block4 \n");       
     }
-    
-    success_r = nfc.mifareclassic_WriteDataBlock(2,data1);      //block to write
-    if (success_r)
-      Serial.println("NDEF URI Record seems to have been written to block 4\n");
-    else
-      Serial.println("NDEF Record creation failed! \n");
-   
+    StatesNum=0;
 
 }
 void setup(void) {
@@ -169,8 +187,8 @@ void setup(void) {
   
   nfc.begin();
   
-  versiondata = nfc.getFirmwareVersion();
   /*
+  versiondata = nfc.getFirmwareVersion();
   if (! versiondata) {
     Serial.print("Didn't find PN53x board");
     while (1); // halt
@@ -178,12 +196,11 @@ void setup(void) {
   */
   
   nfc.SAMConfig();    // configure board to read RFID tags
+  OrderNum=31;
+  StatesNum=0;
 }
 
 void loop(void) {
-  // put your main code here, to run repeatedly:
-  //Serial.println("WORKING NOW...");
-  
 
   if (Serial.available())
   {
