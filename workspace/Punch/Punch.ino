@@ -32,7 +32,7 @@ uint8_t success;
 uint8_t uid[] = {0,0,0,0,0,0,0};
 uint8_t uidLength;//4 or 7 bytes depending on ISO14443A card type
 uint8_t Block1data[16];
-unsigned short PunchNum=47;
+unsigned short PunchNum=51;
 
 /************************************
  * personal function
