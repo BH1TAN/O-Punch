@@ -1,5 +1,5 @@
 /*
- * 不动trailers，和block0，把block51前全部置0
+ * 不动trailers和block0，把block51前全部置0
  * 
  * 
  */
@@ -32,22 +32,7 @@ Adafruit_NFCShield_I2C nfc(IRQ);
 
 void setup(void) {
   Serial.begin(115200);
-  Serial.println("Looking for PN532...");
-
   nfc.begin();
-
-  uint32_t versiondata = nfc.getFirmwareVersion();
-  if (! versiondata) {
-    Serial.print("Didn't find PN53x board");
-    while (1); // halt
-  }
-  
-  // Got ok data, print it out!
-  Serial.print("Found chip PN5"); Serial.println((versiondata>>24) & 0xFF, HEX); 
-  Serial.print("Firmware ver. "); Serial.print((versiondata>>16) & 0xFF, DEC); 
-  Serial.print('.'); Serial.println((versiondata>>8) & 0xFF, DEC);
-  
-  // configure board to read RFID tags
   nfc.SAMConfig();
 }
 
