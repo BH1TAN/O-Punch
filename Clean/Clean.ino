@@ -10,6 +10,7 @@
 
 #define IRQ                     (2)
 #define LEDPIN 6
+#define BUZZERPIN 8
 
 #define NR_SHORTSECTOR          (32)    // Number of short sectors on Mifare 1K/4K
 #define NR_LONGSECTOR           (8)     // Number of long sectors on Mifare 4K
@@ -40,6 +41,7 @@ void setup(void) {
   nfc.SAMConfig();
   strip.begin();
   strip.show();// Initialize all pixels to 'off'
+  pinMode(BUZZERPIN,OUTPUT);
 }
 
 void loop(void) {
@@ -145,9 +147,11 @@ void loop(void) {
     
     strip.setPixelColor(0,strip.Color(0,0,255));//三个位是RGB，只有一个灯时为0号灯
     strip.show();
+    tone(BUZZERPIN,1000);//后者为频率
     delay(100);
     strip.setPixelColor(0,strip.Color(0,0,0));
     strip.show();//亮灯提醒
+    tone(BUZZERPIN,0);
   }
   
   // Wait a bit before trying again

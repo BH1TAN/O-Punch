@@ -8,11 +8,14 @@
 
 #include<Wire.h>
 #include<Adafruit_NFCShield_I2C.h>
+#include <Adafruit_NeoPixel.h>
 
 #define IRQ 2
+#define LEDPIN 6
 
 uint8_t keya[6] = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF };//默认密钥
 
+Adafruit_NeoPixel strip = Adafruit_NeoPixel(1,LEDPIN, NEO_GRB +NEO_KHZ800);
 Adafruit_NFCShield_I2C nfc(IRQ);
 unsigned short TempNum1;
 uint8_t success;
@@ -33,8 +36,9 @@ unsigned short PunchNum=222;
 void setup() {
   Serial.begin(115200);//与电脑通信，不能太小
   nfc.begin();
-  uint32_t versiondata = nfc.getFirmwareVersion();
   nfc.SAMConfig();
+  strip.begin();
+  strip.show();// Initialize all pixels to 'off'
 }
 
 void loop() {
@@ -75,6 +79,11 @@ void loop() {
             success = nfc.mifareclassic_AuthenticateBlock(uid,uidLength,1,0,keya);//更新Block1
             success = nfc.mifareclassic_WriteDataBlock(1,Block1data);//更新Block1
             Serial.println("$$$$END$$$$");
+            strip.setPixelColor(0,strip.Color(0,0,255));//三个位是RGB，只有一个灯时为0号灯
+            strip.show();
+            delay(100);
+            strip.setPixelColor(0,strip.Color(0,0,0));
+            strip.show();//亮灯提醒
             //至此，新增一个记录点的步骤完成
              
           }//上一个记录不是这个点
