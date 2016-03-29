@@ -3,8 +3,8 @@
  * 此为出发器，实现的功能如下：
  * 
  * 清空之前的所有比赛数据
- * 写Block1
- * （提示写好可以出发）
+ * 写Block1,指示下一个Block为2，当前序号0
+ * 提示写好可以出发
  * （计时出发，每分钟出发一次或两次等可选）
  */
 #include <Wire.h>
@@ -13,6 +13,7 @@
 
 #define IRQ 2
 #define LEDPIN 6
+#define BUZZERPIN 8
 
 uint8_t keya[6] = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF };//默认密钥
 
@@ -36,6 +37,7 @@ void setup(){
 
   strip.begin();
   strip.show();
+  pinMode(BUZZERPIN,OUTPUT);
   
 }
 
@@ -49,9 +51,11 @@ void loop(){
       Serial.println("####START####");
     strip.setPixelColor(0,strip.Color(255,0,0));//三个位是RGB，只有一个灯时为0号灯
     strip.show();
+    tone(BUZZERPIN,1000);//声音提醒
     delay(100);
     strip.setPixelColor(0,strip.Color(0,0,0));
     strip.show();//亮灯提醒
+    noTone(BUZZERPIN);
     }//成功写入block1
   }//成功到一张卡
   delay(1000);

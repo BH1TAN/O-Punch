@@ -147,11 +147,11 @@ void loop(void) {
     
     strip.setPixelColor(0,strip.Color(0,0,255));//三个位是RGB，只有一个灯时为0号灯
     strip.show();
-    tone(BUZZERPIN,1000);//后者为频率
+    tone(BUZZERPIN,1000);
     delay(100);
     strip.setPixelColor(0,strip.Color(0,0,0));
     strip.show();//亮灯提醒
-    tone(BUZZERPIN,0);
+    noTone(BUZZERPIN);
   }
   
   // Wait a bit before trying again
