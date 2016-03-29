@@ -61,7 +61,7 @@ void loop() {
         //读取Block1
         success = nfc.mifareclassic_ReadDataBlock(1, Block1data);
         if (success){
-          if(Block1data[2]!=PunchNum&&Block1data[2]!=222){//上一个记录不是这个点，或标签未激活
+          if(Block1data[2]!=PunchNum&&Block1data[2]!=256){//上一个记录不是这个点，或标签未激活
             success = nfc.mifareclassic_AuthenticateBlock(uid,uidLength,Block1data[0],0,keya);
             if(success){//成功进入可能空白的Block
 

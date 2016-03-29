@@ -1,9 +1,9 @@
 /*
- * 把block3第3位置0x02未激活状态
- * 定义点222为终点
+ * 
+ * 定义点256为终点
  * （记录时间）
  * 
- * 目前：copy了普通点签的代码，但最后一步重写Block1的时候把锁定位锁上
+ * 目前：copy了普通点签的代码
  */
 
 #include<Wire.h>
@@ -22,7 +22,7 @@ uint8_t success;
 uint8_t uid[] = { 0, 0, 0, 0, 0, 0, 0 };
 uint8_t uidLength;//4 or 7 bytes depending on ISO14443A card type
 uint8_t Block1data[16];
-unsigned short PunchNum=222;
+unsigned short PunchNum=256;
 
 /************************************
  * personal function
@@ -50,7 +50,7 @@ void loop() {
         //读取Block1
         success = nfc.mifareclassic_ReadDataBlock(1, Block1data);
         if (success){
-          if((Block1data[2]!=PunchNum)&&(Block1data[2]!=222)){//上一个记录不是这个点，或标签未激活
+          if((Block1data[2]!=PunchNum)&&(Block1data[2]!=256)){//上一个记录不是这个点，或标签未激活
             success = nfc.mifareclassic_AuthenticateBlock(uid,uidLength,Block1data[0],0,keya);
             if(success){//成功进入可能空白的Block
 
