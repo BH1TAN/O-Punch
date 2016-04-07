@@ -12,6 +12,7 @@
 
 #define IRQ 2
 #define LEDPIN 6
+#define BUZZERPIN 8
 
 uint8_t keya[6] = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF };//默认密钥
 
@@ -39,6 +40,7 @@ void setup() {
   nfc.SAMConfig();
   strip.begin();
   strip.show();// Initialize all pixels to 'off'
+  pinMode(BUZZERPIN,OUTPUT);
 }
 
 void loop() {
@@ -81,9 +83,11 @@ void loop() {
             Serial.println("$$$$END$$$$");
             strip.setPixelColor(0,strip.Color(0,0,255));//三个位是RGB，只有一个灯时为0号灯
             strip.show();
+            tone(BUZZERPIN,1000);
             delay(100);
             strip.setPixelColor(0,strip.Color(0,0,0));
             strip.show();//亮灯提醒
+            noTone(BUZZERPIN);
             //至此，新增一个记录点的步骤完成
              
           }//上一个记录不是这个点
