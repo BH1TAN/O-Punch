@@ -1,0 +1,29 @@
+Brif Introduction
+---------------------
+一、标签分类
+NFC标签的种类共有四大类，我们目前买到的是 Mifare classic（UID=256^4 bits，需要key）和Mifare Ultralight（UID=256^7，不需key）,创客挑战赛所发标签（背面写明UID）和小米标签为Mifare Ultralight型号，更早前维康科技处买到的是Mifare classic型号。目前点签器只支持使用Mifare Classic标签。
+
+二、基本数据存储形式
+参考网页：https://learn.adafruit.com/adafruit-pn532-rfid-nfc/mifare
+这是NFC标签内数据存储的说明。需注意 (n%4==3) 的block和Block0储存key等信息。当前暂未考虑防伪，故不对这些block（Trailer）进行操作，代码中也需要注意避开这些block，否则易将标签锁死（改了一个自己也不太容易知道的key，key的组合有42亿多种，现有条件难以穷举）
+
+三、点签器相关的数据
+方便起见，将每个 FF 叫做一位。这样一个block有2*8=18位。从左至右以[0]...[17]标记。Block1为基本信息存储空间。其余可用的block由序号从低到高顺序排列，为储存每次打点记录的空间，每个block可存储两条记录，首先存于左侧（高八位），再存于右侧（低八位）
+Block0：不用
+Block1：基本信息
+	[0]下一条记录应存在的block
+	[1]下一条记录应存在block左侧（高八位，0x01）或是右侧（低八位，0x02）
+	[2]当前最后一个点签号，255（0xff）为终点
+
+Blockn：[0]/[8]点号（255）为终点
+	[1]/[9]暂时留空
+	[2]/[10]时 data[?]=millis()/3600000
+	[3]/[11]分 data[?]=(millis()/60000)%60
+	[4]/[12]秒 data[?]=(millis()/1000)%60
+	[5]/[13]秒后二位 data[?]=(millis()/10)%100
+
+四、Clean步骤
+五、StartPunch步骤
+六、Punch步骤
+七、EndPunch步骤
+八、MainStation步骤

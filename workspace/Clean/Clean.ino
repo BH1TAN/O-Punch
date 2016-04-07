@@ -6,8 +6,11 @@
 
 #include <Wire.h>
 #include <Adafruit_NFCShield_I2C.h>
+#include <Adafruit_NeoPixel.h>
 
 #define IRQ                     (2)
+#define LEDPIN 6
+#define BUZZERPIN 8
 
 #define NR_SHORTSECTOR          (32)    // Number of short sectors on Mifare 1K/4K
 #define NR_LONGSECTOR           (8)     // Number of long sectors on Mifare 4K
@@ -30,10 +33,15 @@ static const uint8_t KEY_DEFAULT_KEYAB[6] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF}
 // Create an instance of the NFCShield_I2C class
 Adafruit_NFCShield_I2C nfc(IRQ);
 
+Adafruit_NeoPixel strip = Adafruit_NeoPixel(1,LEDPIN, NEO_GRB +NEO_KHZ800);
+
 void setup(void) {
   Serial.begin(115200);
   nfc.begin();
   nfc.SAMConfig();
+  strip.begin();
+  strip.show();// Initialize all pixels to 'off'
+  pinMode(BUZZERPIN,OUTPUT);
 }
 
 void loop(void) {
@@ -136,6 +144,14 @@ void loop(void) {
       }
     }
     Serial.println("\n\nDone!");
+    
+    strip.setPixelColor(0,strip.Color(0,0,255));//三个位是RGB，只有一个灯时为0号灯
+    strip.show();
+    tone(BUZZERPIN,1000);
+    delay(100);
+    strip.setPixelColor(0,strip.Color(0,0,0));
+    strip.show();//亮灯提醒
+    noTone(BUZZERPIN);
   }
   
   // Wait a bit before trying again
