@@ -1,6 +1,5 @@
 /*
  * 
- * 定义点256为终点
  * （记录时间）
  * 
  * 目前：copy了普通点签的代码
@@ -23,7 +22,7 @@ uint8_t success;
 uint8_t uid[] = { 0, 0, 0, 0, 0, 0, 0 };
 uint8_t uidLength;//4 or 7 bytes depending on ISO14443A card type
 uint8_t Block1data[16];
-unsigned short PunchNum=256;
+unsigned short PunchNum=255;
 
 /************************************
  * personal function
@@ -52,7 +51,7 @@ void loop() {
         //读取Block1
         success = nfc.mifareclassic_ReadDataBlock(1, Block1data);
         if (success){
-          if((Block1data[2]!=PunchNum)&&(Block1data[2]!=256)){//上一个记录不是这个点，或标签未激活
+          if((Block1data[2]!=PunchNum)&&(Block1data[2]!=255)){//上一个记录不是这个点，或标签未激活
             success = nfc.mifareclassic_AuthenticateBlock(uid,uidLength,Block1data[0],0,keya);
             if(success){//成功进入可能空白的Block
 
@@ -61,17 +60,31 @@ void loop() {
               success = nfc.mifareclassic_ReadDataBlock(Block1data[0],data);
               if(Block1data[1]==0x01){//本Block全空
                 data[0]=PunchNum;
-                Block1data[1]=0x02;//指示只有低位空
-                /*今后加时间相关，调整data的函数*/
                 
+                int nowtime;
+                nowtime=millis();
+                data[2]=nowtime/3600000;
+                data[3]=(nowtime/60000)%60;
+                data[4]=(nowtime/1000)%60;
+                data[5]=(nowtime/10)%100;//时间信息
+                
+                Block1data[1]=0x02;//指示只有低位空
               }//Block全空
               else {
                 data[8]=PunchNum;
+                
+                int nowtime;
+                nowtime=millis();
+                data[10]=nowtime/3600000;
+                data[11]=(nowtime/60000)%60;
+                data[12]=(nowtime/1000)%60;
+                data[13]=(nowtime/10)%100;//时间信息
+                
                 Block1data[1]=0x01;//指示全位空
                 if((Block1data[0]%4)==2)
                   Block1data[0]++;   //下一个是trailerblock，跳过之
                 Block1data[0]++;//指向下一位
-                /*今后加时间相关，调整data的函数*/
+                
                 
               }//Block前面被占
               success = nfc.mifareclassic_WriteDataBlock(NowNum,data);//写入记录

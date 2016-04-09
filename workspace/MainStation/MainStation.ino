@@ -1,4 +1,3 @@
-/***********************************************/
 /*
  * 20160324于台湾清华仁斋0316
  * microduino板子作为点签器使用
@@ -26,15 +25,6 @@ uint8_t uidLength;//4 or 7 bytes depending on ISO14443A card type
 uint8_t data[16];
 uint8_t Block1Data[16];
 
-/************************************
- * personal function
- */
-
- 
-/**********************************
- * end of personal function
- */
-
 void setup() {
   Serial.begin(115200);//与电脑通信，不能太小
   nfc.begin();
@@ -51,14 +41,13 @@ void loop() {
     Order = 1 ;
     ReadFlag = 0;
     //display basic information about the tag
-    Serial.println("Found an ISO14443A card");
-    Serial.print("  UID Length: "); Serial.print(uidLength, DEC); Serial.println(" bytes");
-    Serial.print("  UID Value: ");
+    Serial.println("New ISO14443A card");
+    Serial.print("UID Value: ");
     nfc.PrintHex(uid, uidLength);
-    Serial.println("");
+    Serial.println("************************");
     success = nfc.mifareclassic_AuthenticateBlock(uid, uidLength,1, 0, keya);
     success = nfc.mifareclassic_ReadDataBlock(1,Block1Data);
-    for(TempNum1=2;TempNum1<Block1Data[0]+1;TempNum1++){
+    for(TempNum1=1;TempNum1<Block1Data[0]+1;TempNum1++){
       //AuthenticateBlock
       success = nfc.mifareclassic_AuthenticateBlock(uid, uidLength, TempNum1, 0, keya);
       if(success){
@@ -71,24 +60,38 @@ void loop() {
           Serial.print(":");
           nfc.PrintHexChar(data, 16);
           */
-          if((TempNum1%4)!=3) {
+          if(TempNum1==1){
+            Serial.print("START\t\t");
+            Serial.print(data[10],DEC);//时
+            Serial.print(":");
+            Serial.print(data[11],DEC);//分
+            Serial.print(":");
+            Serial.print(data[12],DEC);//秒
+            Serial.print(".");
+            Serial.println(data[13],DEC);//小数
+          }
+          else if((TempNum1%4)!=3) {
             for(TempNum2=0;TempNum2<2;TempNum2++){
-              Serial.print(Order);
-              Serial.print("  ");
-              Serial.print(data[8*TempNum2+0],DEC);
-              Serial.print("  ");
-              Serial.print(data[8*TempNum2+2],DEC);
+              if(data[8*TempNum2+0]!=222){
+                Serial.print(Order);
+                Serial.print("\t");
+                Serial.print(data[8*TempNum2+0],DEC);//点号
+              }
+              else Serial.print("FINISH\t");
+              Serial.print("\t");
+              Serial.print(data[8*TempNum2+2],DEC);//时
               Serial.print(":");
-              Serial.print(data[8*TempNum2+3],DEC);
+              Serial.print(data[8*TempNum2+3],DEC);//分
               Serial.print(":");
-              Serial.print(data[8*TempNum2+4],DEC);
+              Serial.print(data[8*TempNum2+4],DEC);//秒
               Serial.print(".");
               Serial.println(data[8*TempNum2+5],DEC);
+              ReadFlag = 1;
               Order++;
               if(Block1Data[1]==0x02 && Block1Data[0]==TempNum1) TempNum2 = 2;
             }//分别读出Block里两个数据
         }//if不为Trailer
-          ReadFlag = 1;
+
         }//成功读出block
         else{
           Serial.print("!!!!!unable to read block");
@@ -103,7 +106,7 @@ void loop() {
       }//没取得进入block权限
     }//end of for
     
-    Serial.println("***********finish reading*************");
+    Serial.println("*****finish reading*****\n\n");
     if(ReadFlag) {//成功读出数据
       strip.setPixelColor(0,strip.Color(0,0,225));
       strip.show();

@@ -46,6 +46,14 @@ void loop(){
   if(success){
     Serial.println("Access to block1,please wait...");
     success = nfc.mifareclassic_AuthenticateBlock(uid,uidLength,1,0,keya);
+    
+    int nowtime;
+    nowtime=millis();
+    startdata[10]=nowtime/3600000;
+    startdata[11]=(nowtime/60000)%60;
+    startdata[12]=(nowtime/1000)%60;
+    startdata[13]=(nowtime/10)%100;
+    
     success = nfc.mifareclassic_WriteDataBlock(1,startdata);
     if(success){
       Serial.println("####START####");
